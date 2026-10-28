@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/popup_bg"
+    android:padding="12dp"
+    android:layout_margin="16dp">
+
+    <TextView
+        android:id="@+id/quota_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="CODEX 额度同步中…"
+        android:textSize="10sp"
+        android:textColor="#00F0FF"
+        android:gravity="center"
+        android:layout_marginBottom="6dp" />
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="AI 请求执行命令"
+        android:textSize="18sp"
+        android:textColor="#00F0FF"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:layout_marginBottom="6dp" />
+
+    <!-- 风险等级 -->
+    <TextView
+        android:id="@+id/risk_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="MED RISK"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:fontFamily="monospace"
+        android:letterSpacing="0.2"
+        android:background="@drawable/risk_badge"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:paddingTop="3dp"
+        android:paddingBottom="3dp"
+        android:layout_gravity="center"
+        android:layout_marginBottom="12dp" />
+
+    <!-- 命令内容：终端风格 -->
+    <TextView
+        android:id="@+id/cmd_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="> 命令内容"
+        android:textSize="15sp"
+        android:textColor="#00F0FF"
+        android:fontFamily="monospace"
+        android:background="@drawable/cmd_box"
+        android:padding="10dp"
+        android:layout_marginBottom="10dp" />
+
+    <!-- 描述 -->
+    <TextView
+        android:id="@+id/desc_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="// 命令描述"
+        android:textSize="13sp"
+        android:textColor="#6A8AAA"
+        android:fontFamily="monospace"
+        android:gravity="center"
+        android:layout_marginBottom="10dp" />
+
+    <!-- Yes/No 按钮：霓虹描边风格 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <!-- No 按钮 -->
+        <Button
+            android:id="@+id/btn_no"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:text="✕ DENY"
+            android:textSize="16sp"
+            android:textColor="#FF2A6D"
+            android:textStyle="bold"
+            android:fontFamily="monospace"
+            android:letterSpacing="0.15"
+            android:background="@drawable/btn_deny"
+            android:layout_marginEnd="8dp" />
+
+        <!-- Yes 按钮 -->
+        <Button
+            android:id="@+id/btn_yes"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:text="✓ ALLOW"
+            android:textSize="16sp"
+            android:textColor="#05FFA1"
+            android:textStyle="bold"
+            android:fontFamily="monospace"
+            android:letterSpacing="0.15"
+            android:background="@drawable/btn_allow"
+            android:layout_marginStart="8dp" />
+
+    </LinearLayout>
+
+</LinearLayout>

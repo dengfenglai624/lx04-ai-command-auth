@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- CODEX 模式按钮：青色霓虹 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="#1A002833" />
+    <stroke android:width="2dp" android:color="#00F0FF" />
+    <corners android:radius="4dp" />
+</shape>

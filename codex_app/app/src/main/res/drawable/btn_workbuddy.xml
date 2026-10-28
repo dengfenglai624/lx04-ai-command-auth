@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- WORK BUDDY 模式按钮：品红霓虹 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="#1A2E0A28" />
+    <stroke android:width="2dp" android:color="#D400FF" />
+    <corners android:radius="4dp" />
+</shape>

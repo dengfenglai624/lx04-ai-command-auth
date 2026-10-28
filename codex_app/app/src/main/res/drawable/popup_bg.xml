@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 弹窗背景：深色面板 + 霓虹青描边 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="#E60A1420" />
+    <stroke android:width="2dp" android:color="#00F0FF" />
+    <corners android:radius="6dp" />
+</shape>

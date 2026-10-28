@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 风险徽章：描边胶囊 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="#00000000" />
+    <stroke android:width="1dp" android:color="#00F0FF" />
+    <corners android:radius="2dp" />
+</shape>

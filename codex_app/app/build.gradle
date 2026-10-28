@@ -1,0 +1,43 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.lx04.codexauth'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.lx04.codexauth"
+        minSdk 26
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+
+        // 电脑端默认地址：可在 gradle.properties 里覆盖，或安装后在 App 内点击 SERVER 行修改
+        buildConfigField "String", "AUTH_SERVER_URL",
+            "\"${project.findProperty('authServerUrl') ?: 'http://192.168.1.100:8080'}\""
+        buildConfigField "String", "QUOTA_SERVER_URL",
+            "\"${project.findProperty('quotaServerUrl') ?: 'http://192.168.1.100:8081'}\""
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.11.0'
+}
