@@ -76,6 +76,8 @@ public class OverlayService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent != null && intent.hasExtra("MODE")) {
             mode = intent.getStringExtra("MODE");
+            if (quotaView != null)
+                quotaView.setText(("workbuddy".equals(mode) ? "WORKBUDDY" : "CODEX") + " 额度同步中…");
         }
         return START_STICKY;
     }
@@ -115,7 +117,7 @@ public class OverlayService extends Service {
 
     private void setupQuotaDisplay() {
         quotaView = new TextView(this);
-        quotaView.setText("CODEX 额度同步中…");
+        quotaView.setText(("workbuddy".equals(mode) ? "WORKBUDDY" : "CODEX") + " 额度同步中…");
         quotaView.setTextSize(10);
         quotaView.setTextColor(Color.rgb(0, 240, 255));
         quotaView.setBackgroundColor(Color.rgb(5, 8, 16));
@@ -131,8 +133,8 @@ public class OverlayService extends Service {
         catch (RuntimeException e) { Log.w("OverlayService", "Quota overlay unavailable", e); }
         quotaWorker.scheduleWithFixedDelay(() -> {
             String value;
-            try { value = CodexQuota.read(this); }
-            catch (Exception e) { value = "CODEX 额度连接中断 · 请检查电脑端额度服务"; }
+            try { value = CodexQuota.read(this, mode); }
+            catch (Exception e) { value = ("workbuddy".equals(mode) ? "WORKBUDDY" : "CODEX") + " 额度连接中断 · 请检查电脑端额度服务"; }
             final String text = value;
             mainHandler.post(() -> {
                 if (!isRunning) return;

@@ -1,191 +1,284 @@
-# LX04 AI Command Auth · 小爱音箱 AI 授权终端
+# LX04 AI 命令授权系统
 
-把一台小米 AI 音箱（LX04）变成 AI Agent 的**物理授权按钮**：AI 要执行命令时，命令内容实时推到音箱屏幕，由你亲手点「同意 / 拒绝」，AI 才继续。
+为小爱触屏音箱 LX04 开发的 AI 命令授权系统，类似 Codex/Work Buddy 的屏幕弹出授权界面。当 AI 需要执行命令时，LX04 屏幕会弹出 YES/NO 授权窗口。
 
-> Turn a Xiaomi LX04 smart speaker into a physical approval terminal for AI agents — command prompts pop up on the speaker screen, you tap ALLOW / DENY, and the agent waits for your decision.
+## 📺 准备工作
 
-![授权弹窗](docs/screenshots/popup.png)
+**重要：在开始本项目之前，你需要先完成小米音箱的刷机！**
 
-## 为什么做这个
+请参考 Bilibili 教程完成刷机：
+👉 [小米小爱触屏音箱 LX04 刷机教程](https://www.bilibili.com/video/BV1fu4y1U7xz/)
 
-AI Agent 自动执行 shell 命令时，最大的风险不是模型不够聪明，而是**你根本不知道它要干什么**。终端里刷屏的日志很容易被忽略，而这个项目把「授权」搬到一台你随手就能摸到的音箱上：
+### 刷机要求
+- ✅ 完成 SP5 或更高版本的修改固件刷入
+- ✅ 开启 ADB 调试功能（通过"英语绘本"隐藏菜单进入设置）
+- ✅ 能够通过 WiFi 连接 ADB（默认 IP: 192.168.123.134:5555）
 
-- 命令**全文**显示在屏幕上，不是截断的一行日志
-- 风险等级（低/中/高）用颜色区分
-- 有语音播报提醒（"皇上，请审批今天的奏折"）
-- 点完按钮 AI 才会继续，物理隔离感更强
+### 刷机材料
+- 小爱触屏音箱 LX04 刷机资料包
+- SP Flash Tool 刷机工具
+- MTK 驱动程序
+- 修改版固件（推荐 SP5）
 
-## 功能特性
+**注意：** 刷机会影响设备保修，请谨慎操作！
 
-| 功能 | 说明 |
-|---|---|
-| **科幻 HUD 授权弹窗** | 霓虹描边面板、终端风格命令显示、DENY/ALLOW 按钮，适配 800×480 小屏 |
-| **语音播报** | 通过小爱固件自带的 `IMicoDeviceServiceInterface` 调用 TTS，弹窗/同意/拒绝各有台词 |
-| **Codex 额度悬浮条** | 屏幕顶部常驻一行 Codex 剩余额度（短期/每周），数据来自 PC 端只读解析 |
-| **双模式** | `CODEX` / `WORK BUDDY` 两种模式键，可扩展成任意 Agent |
-| **Web 授权页** | 浏览器打开同款科幻 HUD 界面，电脑上也能审批 |
-| **跨进程 HTTP API** | 任何语言 / 任何 Agent 都能接入，附 Python 客户端 |
-| **开机自启** | `BootReceiver` 开机拉起服务，不用每次手动开 |
-| **地址可配置** | App 内点 `SERVER` 行即可改电脑 IP，或编译期用 Gradle 属性注入 |
+## 🎯 项目简介
 
-## 架构
+本项目实现了一个完整的 AI 命令授权系统：
 
+1. **PC 端授权服务器** (`web_auth_server.py`)
+   - 运行在电脑上
+   - 提供 Web 界面和 API
+   - 管理待授权命令队列
+
+2. **LX04 端授权应用** (`codex_app/`)
+   - Android 应用
+   - 悬浮窗显示授权请求
+   - 支持 Codex 和 Work Buddy 两种模式
+   - 实时轮询 PC 服务器
+
+3. **授权流程**
+   ```
+   AI 助手 → 提交命令到 PC 服务器 → LX04 弹出授权窗口 → 
+   用户点击 YES/NO → 结果返回 PC → AI 执行或取消命令
+   ```
+
+## 🛠️ 系统要求
+
+### PC 端
+- Python 3.6+
+- 局域网连接（与 LX04 同一网络）
+
+### LX04 端
+- 已完成刷机的 LX04（Android 8.1+）
+- ADB 调试已开启
+- 悬浮窗权限
+
+## 📦 安装步骤
+
+### 1. 克隆项目
+
+```bash
+git clone <your-repo-url>
+cd lx04-auth
 ```
-[PC: AI Agent / WorkBuddy / Codex]
-        │  POST /api/add          ① 提交待授权命令
-        ▼
-[PC: web_auth_server.py :8080]  ←— 授权状态（内存）
-        ▲                         │
-        │ ② 每 2s 轮询 /api/pending│ ② 每 2s 轮询 /api/pending
-        │                         ▼
-        │          [LX04 音箱 App com.lx04.codexauth]
-        │             · OverlayService 前台服务 + 悬浮窗
-        │             · 语音播报 / 额度悬浮条
-        └── POST /api/auth ③ ←—— 用户点 DENY / ALLOW
+
+### 2. 安装 PC 端依赖
+
+```bash
+pip install -r requirements.txt
 ```
 
-- 两端只通过 HTTP 与服务器通信，无直连
-- 音箱端和 Web 端是两个平行的审批 UI，共用同一套 API
-- 状态保存在服务器内存里，重启清零
+### 3. 编译 LX04 应用
 
-## 环境要求
+#### 方法 A：使用 Android Studio（推荐）
 
-| 项 | 要求 |
-|---|---|
-| 音箱 | 小米 AI 音箱 **LX04**（Android 8.1 / API 27），需能 `adb` 连接 |
-| PC | Windows / macOS / Linux，Python 3.8+（服务器零第三方依赖） |
-| 编译 | JDK **21**（17 亦可）+ Android SDK（compileSdk 34）+ Gradle 8.x |
-| 网络 | 同一局域网，PC 与音箱互通 |
+1. 用 Android Studio 打开 `codex_app/` 目录
+2. 等待 Gradle 同步完成
+3. 点击 Build → Build APK
+4. APK 生成在 `app/build/outputs/apk/debug/app-debug.apk`
 
-> ⚠️ JDK 25 无法编译（Gradle 8.12 不兼容），请用 JDK 17/21。
+#### 方法 B：命令行编译
 
-## 快速开始
+```bash
+# 设置环境变量
+export JAVA_HOME="/path/to/jdk-21"  # 需要 Java 21
+export ANDROID_HOME="/path/to/android-sdk"
 
-### 1. 启动 PC 端授权服务
+# 安装 SDK 组件
+sdkmanager "platform-tools" "build-tools;34.0.0" "platforms;android-34"
+
+# 编译
+cd codex_app
+gradle assembleDebug
+```
+
+**注意：** 
+- 必须使用 Java 21（Java 25 不兼容 Gradle 8.12）
+- 必须使用 Gradle 8.12+（支持 Java 21）
+- Android SDK API 级别 34
+
+### 4. 安装应用到 LX04
+
+```bash
+# 连接 ADB
+adb connect 192.168.123.134:5555
+
+# 安装 APK
+adb install app/build/outputs/apk/debug/app-debug.apk
+
+# 授予悬浮窗权限
+adb shell appops set com.lx04.codexauth SYSTEM_ALERT_WINDOW allow
+```
+
+## 🚀 使用方法
+
+### 1. 启动 PC 授权服务器
 
 ```bash
 python web_auth_server.py
-# 控制台会打印本机 IP，例如 http://192.168.1.10:8080
-# 浏览器打开该地址可看到 Web 授权页（科幻 HUD）
 ```
 
-可选：启动 Codex 额度服务（音箱顶部额度条需要）
+服务器会在 `http://<你的PC-IP>:8080` 启动。
 
-```bash
-python codex_quota_server.py     # 监听 8081，只读解析 ~/.codex/sessions，不外传会话内容
-```
+### 2. 配置 LX04 应用
 
-### 2. 编译 App
+1. 在 LX04 上打开"Codex 授权"应用
+2. 授予悬浮窗权限（首次运行）
+3. 选择模式：
+   - **CODEX** - Codex 模式
+   - **WORK BUDDY** - Work Buddy 模式
+4. 服务自动启动，开始轮询 PC 服务器
 
-```bash
-cd codex_app
-JAVA_HOME=/path/to/jdk-21 gradle assembleDebug \
-  -PauthServerUrl=http://192.168.1.10:8080 \
-  -PquotaServerUrl=http://192.168.1.10:8081
-```
+### 3. AI 集成示例
 
-不传参数则使用默认占位地址 `http://192.168.1.100:8080`，安装后也能在 App 内修改。
-
-### 3. 安装到音箱
-
-```bash
-adb connect <音箱IP>:5555
-adb -s <音箱IP>:5555 install -r codex_app/app/build/outputs/apk/debug/app-debug.apk
-adb -s <音箱IP>:5555 shell am start -n com.lx04.codexauth/.MainActivity
-```
-
-首次打开需要点「GRANT OVERLAY」授予悬浮窗权限。
-
-### 4. 配置并启动
-
-- 点 App 里的 `SERVER: http://... ✎` 一行，填入 PC 地址（授权 8080 / 额度 8081），保存后自动重启服务
-- 点 `CODEX` 或 `WORK BUDDY` 启动前台服务
-- 状态显示「模式运行中」即已开始监听
-
-### 5. 测试整条链路
-
-```bash
-python test_workbuddy.py
-# 音箱应弹出授权窗并语音播报，点 ALLOW 后脚本输出「已授权」
-```
-
-## 接入你的 AI
+在你的 AI 助手代码中：
 
 ```python
-from lx04_auth_client import request_authorization
+from web_auth_server import check_authorization
 
-if request_authorization("rm -rf /tmp/build", "清理构建产物", risk_level="medium", timeout=60):
-    run_command()
+# 执行命令前请求授权
+if check_authorization(
+    command="rm -rf /tmp/test",
+    description="删除临时文件",
+    risk_level="medium",
+    timeout=60
+):
+    # 用户点击了 YES
+    execute_command()
 else:
-    abort()
+    # 用户点击了 NO 或超时
+    print("命令被拒绝")
 ```
 
-Agent 与服务器不在同一台机器时，指定地址：
+### 4. 测试授权流程
 
 ```bash
-export LX04_AUTH_SERVER=http://192.168.1.10:8080
+# 运行测试脚本
+python test_workbuddy.py
 ```
 
-### HTTP API
+测试脚本会发送三个不同风险等级的命令，观察 LX04 屏幕是否弹出授权窗口。
 
-| 方法 | 路径 | 说明 |
-|---|---|---|
-| `GET` | `/` | Web 授权页面 |
-| `GET` | `/api/pending` | 待授权命令列表 |
-| `GET` | `/api/history` | 最近 50 条处理记录 |
-| `GET` | `/api/check/<id>` | 单条状态：`pending` / `authorized` / `denied` |
-| `POST` | `/api/add` | 提交命令 `{"command","description","risk_level"}` → `{"id"}` |
-| `POST` | `/api/auth` | 回传决定 `{"id","authorized":true}` |
+## 📱 界面说明
 
-## 项目结构
+### 主界面
+- **CODEX 按钮**（蓝色）- 启动 Codex 模式
+- **WORK BUDDY 按钮**（紫色）- 启动 Work Buddy 模式
+- **停止服务按钮**（红色）- 停止授权服务
 
-```
-lx04_auth/
-├── web_auth_server.py          # 授权服务器 + 内嵌 Web HUD 页面
-├── lx04_auth_client.py         # Agent 侧 Python 客户端（推荐入口）
-├── codex_quota_server.py       # Codex 额度服务（:8081，只读）
-├── test_workbuddy.py           # 端到端测试
-├── codex_app/                  # Android 工程
-│   └── app/src/main/java/com/lx04/codexauth/
-│       ├── MainActivity.java       # 模式选择 / 权限 / 服务器地址设置
-│       ├── OverlayService.java     # 轮询 + 悬浮窗 + 语音 + 额度条
-│       ├── XiaoAiSpeech.java       # 小爱固件 TTS（Binder 调用）
-│       ├── CodexQuota.java         # 额度读取
-│       ├── Config.java             # 服务器地址运行时配置
-│       └── BootReceiver.java       # 开机自启
-├── docs/screenshots/
-├── docs/legacy/                # 早期版本文档（pc_auth_server 时代，仅参考）
-└── HANDOFF.md                  # 内部开发记录（已在 .gitignore 中排除）
+### 授权弹窗
+- 黑色半透明背景
+- 显示命令内容（等宽字体）
+- 显示命令描述
+- 风险等级标签（低/中/高）
+- **NO 按钮**（红色）- 拒绝命令
+- **YES 按钮**（绿色）- 授权命令
+
+## 🔧 配置说明
+
+### 修改 PC 服务器地址
+
+编辑 `codex_app/app/src/main/java/com/lx04/codexauth/OverlayService.java`:
+
+```java
+private String pcServerUrl = "http://你的PC-IP:8080";
 ```
 
-`app/`（`com.lx04.authcompanion`）是早期原型，已被 `.gitignore` 排除。
-`test_auth.py` / `test_codex.py` / `test_web.py` / `pc_auth_server.py` 为历史版本，保留仅供追溯。
+然后重新编译并安装应用。
 
-> 仓库未包含 Gradle wrapper 与 Gradle 分发包（体积原因）。用 Android Studio 直接打开 `codex_app/` 即可，或本地安装 Gradle 8.x 后执行 `gradle assembleDebug`。
+### 修改端口
 
+编辑 `web_auth_server.py`:
 
-## 安全说明（重要）
+```python
+PC_PORT = 9090    # PC 授权服务端口
+WEB_PORT = 8080   # Web 界面端口
+```
 
-- **无鉴权**：`/api/add` 与 `/api/auth` 没有 token，局域网内任何设备都能调用。**只在你信任的网段使用**，切勿把 8080/8081 暴露到公网。
-- **明文 HTTP**：App 启用了 `usesCleartextTraffic`，同网段可抓包看到命令内容。
-- **语音接口是逆向实现**：`XiaoAiSpeech` 依赖 LX04 固件导出的 `IMicoDeviceServiceInterface`（`ubusRelay` transaction 12），固件升级后可能失效；失效只丢语音，不影响授权。
-- 额度服务只读取本机 Codex 会话中的额度字段，不上传会话内容、不接触凭据。
+## 🐛 常见问题
 
-## 已知限制
+### 1. 应用闪退
+**原因：** 使用了 Java 9+ API（如 `readAllBytes()`）
+**解决：** 已修复，使用 `BufferedReader` 替代
 
-- 弹窗串行处理：多条待授权命令一次只弹一条
-- 无人点击时弹窗会一直挂着（无自动超时）
-- 服务器状态在内存，重启丢失历史
-- 仅在 LX04 上验证，其他小爱型号的语音接口未适配
+### 2. 服务无法启动
+**原因：** Android 8.0+ 需要使用 `startForegroundService()`
+**解决：** 已修复，根据系统版本选择正确的启动方式
 
-## Roadmap
+### 3. LX04 无法连接 PC
+**检查：**
+- PC 和 LX04 是否在同一局域网
+- PC 防火墙是否允许 8080 端口
+- PC IP 地址是否正确（在 LX04 应用中配置）
 
-- [ ] API token / 白名单鉴权
-- [ ] 弹窗超时自动拒绝 + 上报
-- [ ] 状态持久化（SQLite）
-- [ ] 高风险命令二次确认
-- [ ] 多台音箱 / 多 Agent 分流
+### 4. 授权弹窗不显示
+**检查：**
+- 是否已授予悬浮窗权限
+- 服务是否正在运行
+- PC 服务器是否启动
 
-## License
+## 📂 项目结构
 
-[MIT](LICENSE)
+```
+lx04-auth/
+├── web_auth_server.py          # PC 端授权服务器
+├── requirements.txt            # Python 依赖
+├── test_workbuddy.py          # Work Buddy 测试脚本
+├── test_codex.py              # Codex 测试脚本
+├── codex_app/                 # LX04 Android 应用
+│   ├── app/
+│   │   ├── src/main/
+│   │   │   ├── java/com/lx04/codexauth/
+│   │   │   │   ├── MainActivity.java
+│   │   │   │   ├── OverlayService.java
+│   │   │   │   └── BootReceiver.java
+│   │   │   ├── res/layout/
+│   │   │   │   ├── activity_main.xml
+│   │   │   │   └── floating_auth.xml
+│   │   │   └── AndroidManifest.xml
+│   │   └── build.gradle
+│   ├── build.gradle
+│   ├── settings.gradle
+│   ├── gradle.properties
+│   └── local.properties
+└── README.md                  # 本文件
+```
+
+## 🔒 安全说明
+
+- 所有通信在局域网内进行，不经过互联网
+- 授权请求超时时间默认 120 秒
+- 高风险命令会显示红色警告
+- 用户可以随时拒绝任何命令
+
+## 📝 开发计划
+
+- [ ] 支持自定义风险等级颜色
+- [ ] 添加命令历史记录
+- [ ] 支持批量授权
+- [ ] WebSocket 实时通信（替代轮询）
+- [ ] 支持多个 LX04 设备
+- [ ] 移动端管理界面
+
+## 🤝 贡献
+
+欢迎提交 Issue 和 Pull Request！
+
+## 📄 许可证
+
+MIT License
+
+## 🙏 致谢
+
+- 感谢 Bilibili UP 主提供的 LX04 刷机教程
+- 感谢小米社区的反编译资料
+- 感谢 Android 开源项目
+
+## 📞 联系方式
+
+如有问题，请通过 GitHub Issues 联系。
+
+---
+
+**免责声明：** 本项目仅供学习和研究使用。刷机有风险，操作需谨慎。因使用本项目导致的设备损坏或其他损失，作者不承担任何责任。

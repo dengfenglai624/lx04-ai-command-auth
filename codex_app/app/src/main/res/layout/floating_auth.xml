@@ -11,7 +11,7 @@
         android:id="@+id/quota_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="CODEX 额度同步中…"
+        android:text="额度同步中…"
         android:textSize="10sp"
         android:textColor="#00F0FF"
         android:gravity="center"

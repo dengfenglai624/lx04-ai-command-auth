@@ -1,32 +1,44 @@
-# ===== Android / Gradle =====
-codex_app/.gradle/
-codex_app/build/
-codex_app/app/build/
-codex_app/local.properties
-codex_app/gradle-8.*/
-codex_app/gradle8*.zip
+# Build
+*.class
+*.log
 *.apk
 *.aab
-*.iml
-.idea/
-captures/
+*.ap_
+*.dex
+build/
 .gradle/
+local.properties
 
-# ===== Python =====
-__pycache__/
-*.py[cod]
-.venv/
-venv/
+# IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+.settings/
+.project
+.classpath
 
-# ===== 遗留原型工程（根目录 app/，首个版本 com.lx04.authcompanion，不纳入开源版） =====
-/app/
-
-# ===== 临时产物 =====
-*.log
-/tmp/
+# OS
 .DS_Store
 Thumbs.db
+desktop.ini
 
-# 内部开发交接记录（含本机环境信息，不公开发布）
-HANDOFF.md
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+*.egg-info/
+dist/
+*.egg
 
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~

@@ -1,0 +1,2 @@
+# Python dependencies for LX04 Auth System
+# No external dependencies required - uses only standard library
